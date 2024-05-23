@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Admin model
+model Admin {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  name     String
+  picture  String
+  shops    Shop[] // Define the relation but don't use @relation here
+}
+
+// Shop model
+model Shop {
+  id          Int       @id @default(autoincrement())
+  location    String
+  name        String
+  phone       String
+  picture     String
+  email       String
+  password    String
+  openingTime String
+  closingTime String
+  openingDays String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  adminId     Int?
+  admin       Admin?    @relation(fields: [adminId], references: [id])
+  services    Service[]
+}
+
+// Service model
+model Service {
+  id           Int           @id @default(autoincrement())
+  name         String
+  price        Float
+  duration     Int
+  maxService   Int
+  picture      String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  shopId       Int
+  shop         Shop          @relation(fields: [shopId], references: [id])
+  reservations Reservation[]
+}
+
+// Reservation model
+model Reservation {
+  id         Int      @id @default(autoincrement())
+  slotTime   String
+  date       String
+  customerId Int
+  shopId     Int
+  status     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  serviceId  Int
+  service    Service  @relation(fields: [serviceId], references: [id])
+}
+
+model Customer {
+  id         Int      @id @default(autoincrement())
+  name       String
+  phone      String
+  gender     String
+  address    String
+  picture    String
+  email      String   @unique
+  password   String
+  isVerified Boolean
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
