@@ -6,8 +6,9 @@ import { ShopModule } from './shop/shop.module';
 import { ServiceModule } from './service/service.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { CustomerModule } from './customer/customer.module';
+import { OtpModule } from './otp/otp.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, AdminModule, ShopModule, ServiceModule, ReservationModule, CustomerModule],
+  imports: [AuthModule, PrismaModule, AdminModule, ShopModule, ServiceModule, ReservationModule, CustomerModule, OtpModule],
 })
 export class AppModule {}

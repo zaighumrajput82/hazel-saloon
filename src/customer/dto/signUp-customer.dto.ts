@@ -1,11 +1,6 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsEmail,
-  IsBoolean,
-  IsOptional,
-} from 'class-validator';
-export class CreateCustomerDto {
+import { IsString, IsNotEmpty, IsEmail, IsOptional } from 'class-validator';
+
+export class SignUpCustomerDto {
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -33,8 +28,4 @@ export class CreateCustomerDto {
   @IsString()
   @IsNotEmpty()
   password: string;
-
-  @IsBoolean()
-  @IsOptional()
-  isVerified?: boolean;
 }

@@ -84,3 +84,12 @@ model Customer {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+model Otp {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  otp       String
+  isUsed    Boolean
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+}
