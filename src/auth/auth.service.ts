@@ -36,7 +36,7 @@ export class AuthService {
             picture: dto.picture,
           },
         });
-        return this.signToken(dto.email, dto.password);
+        return this.signToken(dto.email, dto.password, 'admin');
       } else {
         return 'User with these credentials already exists';
       }
@@ -95,16 +95,18 @@ export class AuthService {
   async signToken(
     password: string,
     email: string,
+    type: string,
   ): Promise<{ access_token: string }> {
     const payload = {
       password,
       email,
+      type,
     };
 
     const secret = this.config.get('JWT_SECRET');
 
     const token = await this.jwt.signAsync(payload, {
-      expiresIn: '15m',
+      expiresIn: '15d',
       secret: secret,
     });
 

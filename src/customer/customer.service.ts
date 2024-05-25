@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SignUpCustomerDto } from './dto/signUp-customer.dto';
 import { generateOTP } from '../utils/otp.util';
@@ -7,6 +12,10 @@ import { addMinutes } from 'date-fns';
 import * as nodemailer from 'nodemailer'; // Import Nodemailer
 import { sendEmail } from '../utils/otp.util';
 import { otpVerifyDto } from './dto/otpVerify.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { Prisma } from '@prisma/client';
+import { signUpDto } from 'src/auth/dto';
+import { SignInCustomerDto } from './dto/signIn-customer.dto';
 
 @Injectable()
 export class CustomerService {
@@ -123,4 +132,63 @@ export class CustomerService {
     return { message: 'OTP verified successfully' };
   }
   //#endregion Verify OTP
+
+  async update(dto: UpdateCustomerDto) {
+    try {
+      // Check if the customer exists
+      const existingCustomer = await this.prisma.customer.findUnique({
+        where: { email: dto.email },
+      });
+
+      if (!existingCustomer) {
+        throw new NotFoundException('Customer not found');
+      }
+
+      dto.email = existingCustomer.email;
+      dto.isVerified = true;
+      dto.password = await argon2.hash(dto.password);
+      // Perform the update operation
+      const updatedCustomer = await this.prisma.customer.update({
+        where: { email: dto.email },
+        data: { ...dto },
+      });
+
+      return updatedCustomer;
+    } catch (error) {
+      // Handle errors
+      console.error('Error updating customer:', error);
+      throw new Error('Error updating customer');
+    }
+  }
+
+  async signIn(dto: SignInCustomerDto) {
+    try {
+      // Find the customer by email
+      const customer = await this.prisma.customer.findUnique({
+        where: { email: dto.email },
+      });
+
+      // If customer does not exist, throw UnauthorizedException
+      if (!customer) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+
+      // Verify the password
+      const isPasswordValid = await argon2.verify(
+        customer.password, // Hash stored in the database
+        dto.password, // Password entered by the user
+      );
+
+      // If password is invalid, throw UnauthorizedException
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+
+      // Return the customer if authentication is successful
+      return customer;
+    } catch (error) {
+      // Catch and re-throw other errors
+      throw error;
+    }
+  }
 }
