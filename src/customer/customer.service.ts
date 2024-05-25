@@ -160,35 +160,4 @@ export class CustomerService {
       throw new Error('Error updating customer');
     }
   }
-
-  async signIn(dto: SignInCustomerDto) {
-    try {
-      // Find the customer by email
-      const customer = await this.prisma.customer.findUnique({
-        where: { email: dto.email },
-      });
-
-      // If customer does not exist, throw UnauthorizedException
-      if (!customer) {
-        throw new UnauthorizedException('Invalid email or password');
-      }
-
-      // Verify the password
-      const isPasswordValid = await argon2.verify(
-        customer.password, // Hash stored in the database
-        dto.password, // Password entered by the user
-      );
-
-      // If password is invalid, throw UnauthorizedException
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid email or password');
-      }
-
-      // Return the customer if authentication is successful
-      return customer;
-    } catch (error) {
-      // Catch and re-throw other errors
-      throw error;
-    }
-  }
 }

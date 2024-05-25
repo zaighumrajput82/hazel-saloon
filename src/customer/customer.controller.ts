@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Put,
+  Res,
 } from '@nestjs/common';
 import { CustomerService } from './customer.service';
 import { SignUpCustomerDto } from './dto/signUp-customer.dto';
@@ -22,11 +23,6 @@ export class CustomerController {
   @Post('signup')
   async signUp(@Body() signUpCustomerDto: SignUpCustomerDto) {
     return this.customerService.signUp(signUpCustomerDto);
-  }
-
-  @Post('login')
-  async login(@Body() dto: SignInCustomerDto) {
-    return this.customerService.signIn(dto);
   }
 
   @Post('verify-otp')

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -9,6 +10,8 @@ import { ConfigService } from '@nestjs/config';
 import { AuthDto, signUpDto } from './dto';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { LoginShopDto } from 'src/shop/dto/login-shop.dto';
+import { SignInCustomerDto } from 'src/customer/dto/signIn-customer.dto';
 
 @Injectable()
 export class AuthService {
@@ -68,7 +71,7 @@ export class AuthService {
     return `This action removes a #${id} auth`;
   }
 
-  async adminSignin(dto: AuthDto) {
+  async adminSignin(dto: AuthDto, res) {
     try {
       const admin = await this.prisma.admin.findUnique({
         where: { email: dto.email },
@@ -81,8 +84,14 @@ export class AuthService {
         );
 
         if (paswrdMatch) {
-          return 'Logged In Successfully';
-          //  return this.signToken(dto.email, dto.password);
+          // Create token
+          const token = await this.signToken(dto.email, dto.password, 'admin');
+
+          // Set cookies in the response
+          res.cookie('access_token', token.access_token, { httpOnly: true });
+
+          // Return token
+          return token;
         } else {
           return 'Incorrect Credentials!';
         }
@@ -111,5 +120,69 @@ export class AuthService {
     });
 
     return { access_token: token };
+  }
+
+  async login(dto: LoginShopDto, res) {
+    try {
+      const shop = await this.prisma.shop.findFirst({
+        where: { email: dto.email },
+      });
+
+      if (!shop) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const passwordValid = await argon2.verify(shop.password, dto.password);
+      if (!passwordValid) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+      // Create token
+      const token = await this.signToken(dto.email, dto.password, 'admin');
+
+      // Set cookies in the response
+      res.cookie('access_token', token.access_token, { httpOnly: true });
+
+      // Return token
+      return token;
+    } catch (error) {
+      console.error('Error logging in:', error);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+  }
+
+  async signIn(dto: SignInCustomerDto, res) {
+    try {
+      // Find the customer by email
+      const customer = await this.prisma.customer.findUnique({
+        where: { email: dto.email },
+      });
+
+      // If customer does not exist, throw UnauthorizedException
+      if (!customer) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+
+      // Verify the password
+      const isPasswordValid = await argon2.verify(
+        customer.password, // Hash stored in the database
+        dto.password, // Password entered by the user
+      );
+
+      // If password is invalid, throw UnauthorizedException
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+      // Create token
+      const token = await this.signToken(dto.email, dto.password, 'admin');
+
+      // Set cookies in the response
+      res.cookie('access_token', token.access_token, { httpOnly: true });
+
+      // Return token
+      return token;
+    } catch (error) {
+      // Catch and re-throw other errors
+      throw error;
+    }
   }
 }
