@@ -1,30 +1,30 @@
 import {
   IsString,
-  IsNotEmpty,
   IsEmail,
   IsBoolean,
   IsOptional,
+  IsNotEmpty,
 } from 'class-validator';
-export class CreateCustomerDto {
+
+export class signUpDto {
   @IsString()
   @IsNotEmpty()
   name: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   phone: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   gender: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   address: string;
 
   @IsString()
-  @IsOptional()
-  picture?: string;
+  picture: string;
 
   @IsEmail()
   @IsNotEmpty()
@@ -34,7 +34,7 @@ export class CreateCustomerDto {
   @IsNotEmpty()
   password: string;
 
-  @IsBoolean()
   @IsOptional()
-  isVerified?: boolean;
+  @IsBoolean()
+  isVerified: boolean;
 }

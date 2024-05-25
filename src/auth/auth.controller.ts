@@ -6,18 +6,25 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { AuthDto, signUpDto } from './dto';
+import { JwtGuard } from './guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.signup(createAuthDto);
+  @UseGuards(JwtGuard)
+  @Post('AdminSignin')
+  signinAdmin(@Body() dto: AuthDto) {
+    return this.authService.adminSignin(dto);
+  }
+
+  @Post('AdminSignUp')
+  signUpAdmin(@Body() dto: signUpDto) {
+    return this.authService.signUp(dto);
   }
 
   @Get()
@@ -31,7 +38,7 @@ export class AuthController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
+  update(@Param('id') id: string, @Body() updateAuthDto: AuthDto) {
     return this.authService.update(+id, updateAuthDto);
   }
 
