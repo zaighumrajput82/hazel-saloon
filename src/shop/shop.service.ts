@@ -141,4 +141,48 @@ export class ShopService {
       throw new Error('Failed to delete shop');
     }
   }
+
+  async getOpenDays(id: number) {
+    try {
+      const shop = await this.prisma.shop.findUnique({
+        where: {
+          id: id,
+        },
+      });
+      if (!shop) {
+        throw new NotFoundException('Shop not found');
+      }
+      const daysArray = shop.openingDays.split(',');
+      const hoursOpen = this.calculateHoursOpen(
+        shop.openingTime,
+        shop.closingTime,
+      );
+      return {
+        shop,
+        hoursOpen,
+        startsTime: shop.openingTime,
+        endTime: shop.closingTime,
+      };
+    } catch (error) {}
+  }
+
+  private calculateHoursOpen(openingTime: string, closingTime: string): number {
+    const [openHour, openMinute] = openingTime.split(':').map(Number);
+    const [closeHour, closeMinute] = closingTime.split(':').map(Number);
+
+    const openDate = new Date();
+    openDate.setHours(openHour, openMinute, 0, 0);
+
+    const closeDate = new Date();
+    closeDate.setHours(closeHour, closeMinute, 0, 0);
+
+    let diff = (closeDate.getTime() - openDate.getTime()) / (1000 * 60 * 60); // Convert milliseconds to hours
+
+    if (diff < 0) {
+      // If the closing time is past midnight
+      diff += 24;
+    }
+
+    return diff;
+  }
 }

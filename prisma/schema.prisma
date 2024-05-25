@@ -25,7 +25,7 @@ model Admin {
 
 // Shop model
 model Shop {
-  id          Int       @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   location    String
   name        String
   phone       String
@@ -35,11 +35,12 @@ model Shop {
   openingTime String
   closingTime String
   openingDays String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   adminId     Int?
-  admin       Admin?    @relation(fields: [adminId], references: [id])
+  admin       Admin?        @relation(fields: [adminId], references: [id])
   services    Service[]
+  reservation Reservation[]
 }
 
 // Service model
@@ -59,30 +60,33 @@ model Service {
 
 // Reservation model
 model Reservation {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   slotTime   String
   date       String
   customerId Int
   shopId     Int
   status     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   serviceId  Int
-  service    Service  @relation(fields: [serviceId], references: [id])
+  customer   Customer  @relation(fields: [customerId], references: [id])
+  service    Service[]
+  shop       Shop      @relation(fields: [shopId], references: [id])
 }
 
 model Customer {
-  id         Int      @id @default(autoincrement())
-  name       String
-  phone      String
-  gender     String
-  address    String
-  picture    String
-  email      String   @unique
-  password   String
-  isVerified Boolean
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          Int           @id @default(autoincrement())
+  name        String
+  phone       String
+  gender      String
+  address     String
+  picture     String
+  email       String        @unique
+  password    String
+  isVerified  Boolean
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  reservation Reservation[]
 }
 
 model Otp {

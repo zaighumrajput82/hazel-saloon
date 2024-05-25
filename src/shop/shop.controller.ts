@@ -12,6 +12,7 @@ import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
 import { dot } from 'node:test/reporters';
 import { LoginShopDto } from './dto/login-shop.dto';
+import { get } from 'node:http';
 
 @Controller('shop')
 export class ShopController {
@@ -33,12 +34,15 @@ export class ShopController {
 
   @Get('allShops')
   findShops() {
-    console.log('okokkokokokokokoko');
     return this.shopService.findAll();
   }
 
   @Delete('id')
   deleteShop(@Body() body: { id: number }) {
     return this.shopService.delete(body.id);
+  }
+  @Get('openDays')
+  getOpenDays(@Body() body: { id: number }) {
+    return this.shopService.getOpenDays(body.id);
   }
 }
