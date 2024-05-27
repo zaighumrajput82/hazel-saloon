@@ -45,4 +45,9 @@ export class ShopController {
   getOpenDays(@Body() body: { id: number }) {
     return this.shopService.getOpenDays(body.id);
   }
+
+  @Get('id')
+  getSlots(@Body() body: { id: number }) {
+    return this.shopService.getService(body.id);
+  }
 }

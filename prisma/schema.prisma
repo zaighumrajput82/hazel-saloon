@@ -60,18 +60,18 @@ model Service {
 
 // Reservation model
 model Reservation {
-  id         Int       @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   slotTime   String
   date       String
   customerId Int
   shopId     Int
   status     String
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   serviceId  Int
-  customer   Customer  @relation(fields: [customerId], references: [id])
-  service    Service[]
-  shop       Shop      @relation(fields: [shopId], references: [id])
+  customer   Customer @relation(fields: [customerId], references: [id])
+  service    Service  @relation(fields: [serviceId], references: [id])
+  shop       Shop     @relation(fields: [shopId], references: [id])
 }
 
 model Customer {

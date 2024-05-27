@@ -11,9 +11,13 @@ import * as argon2 from 'argon2';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginShopDto } from './dto/login-shop.dto';
 import * as dayjs from 'dayjs';
+import { Reservation, Service } from '@prisma/client';
 @Injectable()
 export class ShopService {
   constructor(private prisma: PrismaService) {}
+
+  //#region  Create Shop
+
   async create(createShopDto: CreateShopDto) {
     try {
       // Hash the password before saving to the database
@@ -48,6 +52,8 @@ export class ShopService {
       );
     }
   }
+
+  //#endregion Create Shop
 
   //#region Find All Shops
 
@@ -159,6 +165,150 @@ export class ShopService {
 
   //#endregion Delete Shop
 
+  //#region  Reservation
+
+  async getService(id: number) {
+    // Fetch the service by ID
+    const service = await this.prisma.service.findUnique({
+      where: { id: id },
+    });
+
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+
+    // Fetch the shop associated with the service
+    const shop = await this.prisma.shop.findUnique({
+      where: { id: service.shopId },
+    });
+
+    if (!shop) {
+      throw new NotFoundException('Shop not found');
+    }
+
+    // Split the opening days
+    const daysArray = shop.openingDays.split(',');
+    const hoursOpen = this.calculateHoursOpen(
+      shop.openingTime,
+      shop.closingTime,
+    );
+
+    const openDaysWithSlots = this.getScheduleForMonth(
+      daysArray,
+      shop.openingTime,
+      shop.closingTime,
+    );
+    // Fetch reservations for the service
+    const reservations = await this.prisma.reservation.findMany({
+      where: { serviceId: id },
+    });
+
+    // Update slots availability based on reservations
+    this.updateSlotsAvailability(openDaysWithSlots, reservations, service);
+
+    return {
+      service,
+      shop,
+      hoursOpen,
+      openDays: openDaysWithSlots,
+    };
+  }
+
+  calculateHoursOpen(openingTime: string, closingTime: string): number {
+    const [openingHour, openingMinute] = openingTime.split(':').map(Number);
+    const [closingHour, closingMinute] = closingTime.split(':').map(Number);
+
+    const openingDate = new Date();
+    openingDate.setHours(openingHour, openingMinute, 0, 0);
+
+    const closingDate = new Date();
+    closingDate.setHours(closingHour, closingMinute, 0, 0);
+
+    const hoursOpen =
+      (closingDate.getTime() - openingDate.getTime()) / (1000 * 60 * 60);
+
+    // Round to two decimal places
+    return parseFloat(hoursOpen.toFixed(2));
+  }
+
+  generateSlotsForDay(
+    openingTime: string,
+    closingTime: string,
+    date: dayjs.Dayjs,
+  ) {
+    const slots = [];
+    let slotStart = dayjs(date.format('YYYY-MM-DD') + ' ' + openingTime);
+    const slotEnd = dayjs(date.format('YYYY-MM-DD') + ' ' + closingTime);
+
+    while (slotStart.isBefore(slotEnd)) {
+      slots.push(
+        slotStart.format('HH:mm') +
+          ' - ' +
+          slotStart.add(1, 'hour').format('HH:mm'),
+      );
+      slotStart = slotStart.add(1, 'hour');
+    }
+
+    return slots;
+  }
+
+  updateSlotsAvailability(openDaysWithSlots, reservations, service) {
+    const serviceDuration = service.duration;
+    const maxService = service.maxService;
+
+    openDaysWithSlots.forEach((day) => {
+      // Skip processing for Sunday
+      if (day.day === 'Sunday') {
+        return;
+      }
+
+      day.slots = day.slots.map((slot) => {
+        const [slotStartTime, slotEndTime] = slot.split(' - ');
+        const slotTime = dayjs(day.date + ' ' + slotStartTime);
+        const endTime = dayjs(day.date + ' ' + slotEndTime);
+
+        // Count the number of bookings for this slot
+        const numBookings = reservations.reduce((count, reservation) => {
+          if (reservation.date === day.date && reservation.slotTime === slot) {
+            return count + 1;
+          }
+
+          const [reservationStartTime, reservationEndTime] =
+            reservation.slotTime.split(' - ');
+          const reservationStart = dayjs(
+            reservation.date + ' ' + reservationStartTime,
+          );
+          const reservationEnd = dayjs(
+            reservation.date + ' ' + reservationEndTime,
+          );
+
+          // Check if the reservation overlaps with the current slot
+          if (
+            (reservationStart.isBefore(slotTime) &&
+              reservationEnd.isAfter(slotTime)) ||
+            (reservationStart.isBefore(endTime) &&
+              reservationEnd.isAfter(endTime))
+          ) {
+            return count + 1;
+          }
+
+          return count;
+        }, 0);
+
+        // Check if the number of bookings exceeds maxService
+        if (numBookings >= maxService) {
+          // Mark the slot as unavailable
+          return `${slot} (Unavailable)`;
+        }
+
+        // Return the slot as it is
+        return slot;
+      });
+    });
+  }
+
+  //#endregion Reservation
+
   //#region  Monthly Open Days With Dates Calculation
 
   async getOpenDays(id: number) {
@@ -193,23 +343,6 @@ export class ShopService {
       console.error('Error getting open days:', error);
       throw new Error('Could not get open days');
     }
-  }
-
-  calculateHoursOpen(openingTime: string, closingTime: string): number {
-    const [openingHour, openingMinute] = openingTime.split(':').map(Number);
-    const [closingHour, closingMinute] = closingTime.split(':').map(Number);
-
-    const openingDate = new Date();
-    openingDate.setHours(openingHour, openingMinute, 0, 0);
-
-    const closingDate = new Date();
-    closingDate.setHours(closingHour, closingMinute, 0, 0);
-
-    const hoursOpen =
-      (closingDate.getTime() - openingDate.getTime()) / (1000 * 60 * 60);
-
-    // Round to two decimal places
-    return parseFloat(hoursOpen.toFixed(2));
   }
 
   getScheduleForMonth(
@@ -264,27 +397,6 @@ export class ShopService {
     );
 
     return schedule;
-  }
-
-  generateSlotsForDay(
-    openingTime: string,
-    closingTime: string,
-    date: dayjs.Dayjs,
-  ) {
-    const slots = [];
-    let slotStart = dayjs(date.format('YYYY-MM-DD') + ' ' + openingTime);
-    const slotEnd = dayjs(date.format('YYYY-MM-DD') + ' ' + closingTime);
-
-    while (slotStart.isBefore(slotEnd)) {
-      slots.push(
-        slotStart.format('HH:mm') +
-          ' - ' +
-          slotStart.add(1, 'hour').format('HH:mm'),
-      );
-      slotStart = slotStart.add(1, 'hour');
-    }
-
-    return slots;
   }
 
   //#endregion  Monthly Open Days With Dates Calculation
