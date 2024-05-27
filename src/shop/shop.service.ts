@@ -10,6 +10,7 @@ import { UpdateShopDto } from './dto/update-shop.dto';
 import * as argon2 from 'argon2';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginShopDto } from './dto/login-shop.dto';
+import * as dayjs from 'dayjs';
 @Injectable()
 export class ShopService {
   constructor(private prisma: PrismaService) {}
@@ -48,11 +49,16 @@ export class ShopService {
     }
   }
 
+  //#region Find All Shops
+
   async findAll() {
     try {
       return await this.prisma.shop.findMany();
     } catch (error) {}
   }
+  //#endregion Find All Shops
+
+  //#region  Login Shop
 
   async login(dto: LoginShopDto) {
     try {
@@ -75,6 +81,10 @@ export class ShopService {
       throw new UnauthorizedException('Invalid credentials');
     }
   }
+
+  //#endregion Login Shop
+
+  //#region  Update Shop
 
   async updateShop(dto: UpdateShopDto) {
     try {
@@ -113,6 +123,11 @@ export class ShopService {
       throw new BadRequestException('Error updating shop');
     }
   }
+
+  //#endregion Update Shop
+
+  //#region  Delete Shop
+
   async delete(id: number) {
     try {
       const shop = await this.prisma.shop.findUnique({
@@ -142,47 +157,135 @@ export class ShopService {
     }
   }
 
+  //#endregion Delete Shop
+
+  //#region  Monthly Open Days With Dates Calculation
+
   async getOpenDays(id: number) {
     try {
       const shop = await this.prisma.shop.findUnique({
-        where: {
-          id: id,
-        },
+        where: { id: id },
       });
       if (!shop) {
         throw new NotFoundException('Shop not found');
       }
+
       const daysArray = shop.openingDays.split(',');
       const hoursOpen = this.calculateHoursOpen(
         shop.openingTime,
         shop.closingTime,
       );
+
+      const openDaysWithSlots = this.getScheduleForMonth(
+        daysArray,
+        shop.openingTime,
+        shop.closingTime,
+      );
+
       return {
         shop,
         hoursOpen,
         startsTime: shop.openingTime,
         endTime: shop.closingTime,
+        openDays: openDaysWithSlots,
       };
-    } catch (error) {}
+    } catch (error) {
+      console.error('Error getting open days:', error);
+      throw new Error('Could not get open days');
+    }
   }
 
-  private calculateHoursOpen(openingTime: string, closingTime: string): number {
-    const [openHour, openMinute] = openingTime.split(':').map(Number);
-    const [closeHour, closeMinute] = closingTime.split(':').map(Number);
+  calculateHoursOpen(openingTime: string, closingTime: string): number {
+    const [openingHour, openingMinute] = openingTime.split(':').map(Number);
+    const [closingHour, closingMinute] = closingTime.split(':').map(Number);
 
-    const openDate = new Date();
-    openDate.setHours(openHour, openMinute, 0, 0);
+    const openingDate = new Date();
+    openingDate.setHours(openingHour, openingMinute, 0, 0);
 
-    const closeDate = new Date();
-    closeDate.setHours(closeHour, closeMinute, 0, 0);
+    const closingDate = new Date();
+    closingDate.setHours(closingHour, closingMinute, 0, 0);
 
-    let diff = (closeDate.getTime() - openDate.getTime()) / (1000 * 60 * 60); // Convert milliseconds to hours
+    const hoursOpen =
+      (closingDate.getTime() - openingDate.getTime()) / (1000 * 60 * 60);
 
-    if (diff < 0) {
-      // If the closing time is past midnight
-      diff += 24;
+    // Round to two decimal places
+    return parseFloat(hoursOpen.toFixed(2));
+  }
+
+  getScheduleForMonth(
+    daysArray: string[],
+    openingTime: string,
+    closingTime: string,
+  ) {
+    const daysOfWeek = {
+      Monday: 1,
+      Tuesday: 2,
+      Wednesday: 3,
+      Thursday: 4,
+      Friday: 5,
+      Saturday: 6,
+      Sunday: 0,
+    };
+
+    const today = dayjs();
+    const endDate = today.add(1, 'month');
+    const schedule = [];
+
+    for (const day of daysArray) {
+      const dayOfWeek = daysOfWeek[day];
+      let currentDate = today;
+
+      while (currentDate.isBefore(endDate)) {
+        const currentDay = currentDate.day();
+        const daysUntilNext = (dayOfWeek - currentDay + 7) % 7;
+
+        const nextDate = currentDate.add(daysUntilNext, 'day');
+        if (nextDate.isBefore(endDate)) {
+          const slots = this.generateSlotsForDay(
+            openingTime,
+            closingTime,
+            nextDate,
+          );
+          schedule.push({
+            day,
+            date: nextDate.format('YYYY-MM-DD'),
+            month: nextDate.format('MMMM'),
+            slots,
+          });
+        }
+
+        currentDate = nextDate.add(1, 'day');
+      }
     }
 
-    return diff;
+    // Sort the schedule array by date
+    schedule.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+
+    return schedule;
   }
+
+  generateSlotsForDay(
+    openingTime: string,
+    closingTime: string,
+    date: dayjs.Dayjs,
+  ) {
+    const slots = [];
+    let slotStart = dayjs(date.format('YYYY-MM-DD') + ' ' + openingTime);
+    const slotEnd = dayjs(date.format('YYYY-MM-DD') + ' ' + closingTime);
+
+    while (slotStart.isBefore(slotEnd)) {
+      slots.push(
+        slotStart.format('HH:mm') +
+          ' - ' +
+          slotStart.add(1, 'hour').format('HH:mm'),
+      );
+      slotStart = slotStart.add(1, 'hour');
+    }
+
+    return slots;
+  }
+
+  //#endregion  Monthly Open Days With Dates Calculation
 }

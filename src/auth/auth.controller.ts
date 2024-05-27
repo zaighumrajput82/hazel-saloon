@@ -21,7 +21,7 @@ export class AuthController {
 
   // @UseGuards(JwtGuard)
   @Post('AdminSignin')
-  signinAdmin(@Body() dto: AuthDto, @Res() res: Response) {
+  signinAdmin(@Body() dto: AuthDto, @Res({ passthrough: true }) res: Response) {
     return this.authService.adminSignin(dto, res);
   }
 
