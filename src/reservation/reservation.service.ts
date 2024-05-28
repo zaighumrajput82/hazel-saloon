@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
+import { CancelReservationDto } from './dto/CancelReservationDto.dto';
 
 @Injectable()
 export class ReservationService {
@@ -56,7 +57,9 @@ export class ReservationService {
     return updatedReservation;
   }
 
-  async remove(id: number) {
+  async cancelReservation(cancelReservationDto: CancelReservationDto) {
+    const { id } = cancelReservationDto;
+
     const reservation = await this.prisma.reservation.findUnique({
       where: { id },
     });
@@ -65,8 +68,10 @@ export class ReservationService {
       throw new NotFoundException('Reservation not found');
     }
 
-    return this.prisma.reservation.delete({
+    await this.prisma.reservation.delete({
       where: { id },
     });
+
+    return { message: 'Reservation cancelled successfully' };
   }
 }
