@@ -200,7 +200,13 @@ export class ShopService {
     );
     // Fetch reservations for the service
     const reservations = await this.prisma.reservation.findMany({
-      where: { serviceId: id },
+      where: {
+        service: {
+          some: {
+            id: id,
+          },
+        },
+      },
     });
 
     // Update slots availability based on reservations
