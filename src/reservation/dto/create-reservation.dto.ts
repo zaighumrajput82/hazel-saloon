@@ -4,8 +4,10 @@ import {
   IsDateString,
   IsArray,
   IsOptional,
+  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { status } from '../enum/enum-status';
 
 export class CreateReservationDto {
   @IsString()
@@ -20,8 +22,8 @@ export class CreateReservationDto {
   @IsInt()
   shopId: number;
 
-  @IsString()
-  status: string;
+  @IsNotEmpty()
+  status: status;
 
   @IsArray()
   @Type(() => Number)

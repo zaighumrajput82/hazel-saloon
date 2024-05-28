@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
@@ -11,67 +15,86 @@ export class ReservationService {
   async createReservation(createReservationDto: CreateReservationDto) {
     const { serviceIds, ...reservationData } = createReservationDto;
 
-    const reservation = await this.prisma.reservation.create({
-      data: {
-        ...reservationData,
-        service: {
-          connect: serviceIds?.map((id) => ({ id })) || [],
+    try {
+      const reservation = await this.prisma.reservation.create({
+        data: {
+          ...reservationData,
+          service: {
+            connect: serviceIds?.map((id) => ({ id })) || [],
+          },
         },
-      },
-    });
+      });
 
-    return reservation;
+      return reservation;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to create reservation');
+    }
   }
 
   async update(id: number, updateReservationDto: UpdateReservationDto) {
-    const reservation = await this.prisma.reservation.findUnique({
-      where: { id },
-      include: { service: true },
-    });
+    try {
+      const reservation = await this.prisma.reservation.findUnique({
+        where: { id },
+        include: { service: true },
+      });
 
-    if (!reservation) {
-      throw new NotFoundException('Reservation not found');
-    }
+      if (!reservation) {
+        throw new NotFoundException('Reservation not found');
+      }
 
-    // Extract data from DTO or use existing data
-    const { slotTime, date, customerId, shopId, status } = updateReservationDto;
+      // Extract data from DTO or use existing data
+      const { slotTime, date, customerId, shopId, status } =
+        updateReservationDto;
 
-    // Update related service data if provided
-    const serviceIds = updateReservationDto.serviceIds || [];
+      // Update related service data if provided
+      const serviceIds = updateReservationDto.serviceIds || [];
 
-    // Update reservation data
-    const updatedReservation = await this.prisma.reservation.update({
-      where: { id },
-      data: {
-        slotTime,
-        date,
-        customerId,
-        shopId,
-        status,
-        service: {
-          set: serviceIds.map((id) => ({ id })),
+      // Update reservation data
+      const updatedReservation = await this.prisma.reservation.update({
+        where: { id },
+        data: {
+          slotTime,
+          date,
+          customerId,
+          shopId,
+          status,
+          service: {
+            set: serviceIds.map((id) => ({ id })),
+          },
         },
-      },
-    });
+      });
 
-    return updatedReservation;
+      return updatedReservation;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update reservation');
+    }
   }
 
   async cancelReservation(cancelReservationDto: CancelReservationDto) {
     const { id } = cancelReservationDto;
 
-    const reservation = await this.prisma.reservation.findUnique({
-      where: { id },
-    });
+    try {
+      const reservation = await this.prisma.reservation.findUnique({
+        where: { id },
+      });
 
-    if (!reservation) {
-      throw new NotFoundException('Reservation not found');
+      if (!reservation) {
+        throw new NotFoundException('Reservation not found');
+      }
+
+      await this.prisma.reservation.delete({
+        where: { id },
+      });
+
+      return { message: 'Reservation cancelled successfully' };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to cancel reservation');
     }
-
-    await this.prisma.reservation.delete({
-      where: { id },
-    });
-
-    return { message: 'Reservation cancelled successfully' };
   }
 }
