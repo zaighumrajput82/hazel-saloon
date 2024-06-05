@@ -57,7 +57,7 @@ export class ReservationService {
           date,
           customerId,
           shopId,
-          status,
+          status: status as any,
           service: {
             set: serviceIds.map((id) => ({ id })),
           },

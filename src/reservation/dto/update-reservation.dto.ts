@@ -33,7 +33,7 @@ export class UpdateReservationDto {
 
   @IsOptional()
   @IsString()
-  status?: string;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED';
 
   @IsArray()
   @Type(() => Number)

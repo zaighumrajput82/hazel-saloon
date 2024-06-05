@@ -23,7 +23,7 @@ export class CreateReservationDto {
   shopId: number;
 
   @IsNotEmpty()
-  status: status;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED';
 
   @IsArray()
   @Type(() => Number)
