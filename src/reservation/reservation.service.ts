@@ -67,33 +67,56 @@ export class ReservationService {
 
   //#endregion Create Reservation
 
+  //#region  Update Reservation
+
   async update(id: number, updateReservationDto: UpdateReservationDto) {
     try {
-      const reservation = await this.prisma.reservation.findUnique({
+      const existingReservation = await this.prisma.reservation.findUnique({
         where: { id },
         include: { service: true },
       });
 
-      if (!reservation) {
+      if (!existingReservation) {
         throw new NotFoundException('Reservation not found');
       }
 
-      // Extract data from DTO or use existing data
-      const { slotTime, date, customerId, shopId, status } =
-        updateReservationDto;
+      const { serviceIds, slotTime, date, ...restData } = updateReservationDto;
 
-      // Update related service data if provided
-      const serviceIds = updateReservationDto.serviceIds || [];
+      // Check for each service ID if the maxService limit is exceeded
+      for (const serviceId of serviceIds) {
+        const service = await this.prisma.service.findUnique({
+          where: { id: serviceId },
+        });
+
+        if (!service) {
+          throw new ConflictException(`Service with ID ${serviceId} not found`);
+        }
+
+        const existingReservationsCount = await this.prisma.reservation.count({
+          where: {
+            service: {
+              some: { id: serviceId },
+            },
+            slotTime: slotTime || existingReservation.slotTime,
+            date: date || existingReservation.date,
+            NOT: { id }, // Exclude current reservation from the count
+          },
+        });
+
+        if (existingReservationsCount >= service.maxService) {
+          throw new ConflictException(
+            `Maximum number of reservations reached for service ID ${serviceId} at the requested time`,
+          );
+        }
+      }
 
       // Update reservation data
       const updatedReservation = await this.prisma.reservation.update({
         where: { id },
         data: {
+          ...restData,
           slotTime,
           date,
-          customerId,
-          shopId,
-          status: status as any,
           service: {
             set: serviceIds.map((id) => ({ id })),
           },
@@ -102,12 +125,17 @@ export class ReservationService {
 
       return updatedReservation;
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException
+      ) {
         throw error;
       }
       throw new InternalServerErrorException('Failed to update reservation');
     }
   }
+
+  //#endregion Update Reservation
 
   async cancelReservation(cancelReservationDto: CancelReservationDto) {
     const { id } = cancelReservationDto;
