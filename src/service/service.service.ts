@@ -40,30 +40,49 @@ export class ServiceService {
     }
   }
 
-  async findAll() {
+  async findAll(id: number) {
     try {
-      return await this.prisma.service.findMany();
+      const shop = await this.prisma.shop.findUnique({ where: { id: id } });
+
+      if (shop) {
+        return await this.prisma.service.findMany();
+      }
+      return 'Shop not found';
     } catch (error) {}
   }
 
   async updateService(dto: UpdateServiceDto) {
     try {
-      // Find the shop by email
-      const existingService = await this.prisma.service.findFirst({
-        where: { name: dto.name },
+      // Find the shop by id
+
+      const shop = await this.prisma.shop.findUnique({
+        where: {
+          id: Number(dto.shopId),
+        },
       });
 
-      if (!existingService) {
-        throw new NotFoundException('Shop not found');
+      if (!shop) {
+        return 'shop not found';
+        // throw new NotFoundException('Shop not found');
       }
 
-      // Update the shop details
-      const updatedService = await this.prisma.service.update({
-        where: { id: existingService.id },
-        data: { ...dto },
+      const existingService = await this.prisma.service.findUnique({
+        where: { id: Number(dto.id) },
       });
+      // console.log(existingService);
 
-      return updatedService;
+      if (existingService) {
+        //  Update the shop details
+        delete dto.shopId, dto.id;
+
+        const updatedService = await this.prisma.service.update({
+          where: { id: existingService.id },
+          data: { ...dto },
+        });
+      }
+
+      //   return updatedService;
+      // }
     } catch (error) {
       console.error('Error updating shop:', error);
       throw new BadRequestException('Error updating shop');
