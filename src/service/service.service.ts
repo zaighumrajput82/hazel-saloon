@@ -69,19 +69,25 @@ export class ServiceService {
       const existingService = await this.prisma.service.findUnique({
         where: { id: Number(dto.id) },
       });
-      // console.log(existingService);
+
+      const existingServiceName = await this.prisma.service.findFirst({
+        where: { name: dto.name },
+      });
 
       if (existingService) {
         //  Update the shop details
         delete dto.shopId, dto.id;
+        if (existingServiceName) {
+          return dto.name + ' Already exists';
+        }
 
         const updatedService = await this.prisma.service.update({
           where: { id: existingService.id },
           data: { ...dto },
         });
+        return updatedService;
       }
 
-      //   return updatedService;
       // }
     } catch (error) {
       console.error('Error updating shop:', error);
