@@ -21,6 +21,16 @@ export class ServiceService {
         throw new NotFoundException('Shop not found');
       }
 
+      dto.name = dto.name.toUpperCase();
+
+      const existingService = await this.prisma.service.findFirst({
+        where: { name: dto.name },
+      });
+
+      if (existingService) {
+        return dto.name + ' Service Already Exists';
+      }
+
       // Create the service
       const createdService = await this.prisma.service.create({
         data: {

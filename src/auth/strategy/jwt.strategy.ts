@@ -15,10 +15,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       secretOrKey: config.get('JWT_SECRET'),
     });
   }
-  async validate(payload: { password: string; email: string; type: string }) {
+  async validate(payload: { password: string; email: string }) {
     // Extract values from payload
-    const { email, password, type } = payload;
+    const { email, password } = payload;
 
-    return { email, password, type };
+    return { email, password };
   }
 }

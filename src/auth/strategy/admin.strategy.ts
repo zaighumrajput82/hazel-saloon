@@ -14,15 +14,16 @@ export class AdminStrategy extends PassportStrategy(Strategy, 'admin') {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: configService.get('JWT_SECRET'),
     });
-    console.log('AdminStrategy initialized'); // Add this line
+    console.log('AdminStrategy initialized');
   }
 
-  async validate(payload: { password; email; type }) {
-    console.log('AdminStrategy validate method called'); // Add this line
-    const { password, email, type } = payload;
+  async validate(payload: { email; password; type }) {
+    console.log('AdminStrategy validate method called');
+
+    const { email, password, type } = payload;
 
     const ownerVerify = await this.prisma.admin.findUnique({
-      where: { password, email },
+      where: { email: password },
     });
 
     if (!ownerVerify) {

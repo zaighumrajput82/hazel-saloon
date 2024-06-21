@@ -39,7 +39,7 @@ export class AuthService {
             picture: dto.picture,
           },
         });
-        return this.signToken(dto.email, dto.password, 'admin');
+        return this.signToken(dto.email, dto.password);
       } else {
         return 'User with these credentials already exists';
       }
@@ -85,7 +85,7 @@ export class AuthService {
 
         if (paswrdMatch) {
           // Create token
-          const token = await this.signToken(dto.email, dto.password, 'admin');
+          const token = await this.signToken(dto.email, dto.password);
 
           // Set cookies in the response
           res.cookie('access_token', token.access_token, { httpOnly: true });
@@ -104,12 +104,10 @@ export class AuthService {
   async signToken(
     password: string,
     email: string,
-    type: string,
   ): Promise<{ access_token: string }> {
     const payload = {
       password,
       email,
-      type,
     };
 
     const secret = this.config.get('JWT_SECRET');
@@ -137,7 +135,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
       }
       // Create token
-      const token = await this.signToken(dto.email, dto.password, 'admin');
+      const token = await this.signToken(dto.email, dto.password);
 
       // Set cookies in the response
       res.cookie('access_token', token.access_token, { httpOnly: true });
@@ -173,7 +171,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid email or password');
       }
       // Create token
-      const token = await this.signToken(dto.email, dto.password, 'admin');
+      const token = await this.signToken(dto.email, dto.password);
 
       // Set cookies in the response
       res.cookie('access_token', token.access_token, { httpOnly: true });
