@@ -7,7 +7,7 @@ CREATE TABLE "Admin" (
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "picture" TEXT NOT NULL,
+    "picture" TEXT,
 
     CONSTRAINT "Admin_pkey" PRIMARY KEY ("id")
 );
@@ -42,8 +42,19 @@ CREATE TABLE "Service" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "shopId" INTEGER NOT NULL,
+    "categoryId" INTEGER NOT NULL,
 
     CONSTRAINT "Service_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "serviceCategory" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "serviceCategory_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -99,6 +110,9 @@ CREATE TABLE "_ReservationToService" (
 CREATE UNIQUE INDEX "Admin_email_key" ON "Admin"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "serviceCategory_name_key" ON "serviceCategory"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Customer_email_key" ON "Customer"("email");
 
 -- CreateIndex
@@ -112,6 +126,9 @@ CREATE INDEX "_ReservationToService_B_index" ON "_ReservationToService"("B");
 
 -- AddForeignKey
 ALTER TABLE "Shop" ADD CONSTRAINT "Shop_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "Admin"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Service" ADD CONSTRAINT "Service_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "serviceCategory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Service" ADD CONSTRAINT "Service_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "Shop"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
