@@ -5,6 +5,7 @@ import {
   IsUrl,
   ArrayNotEmpty,
   ArrayMinSize,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateAdminDto {
@@ -20,6 +21,7 @@ export class CreateAdminDto {
   @IsString()
   name: string;
 
-  @IsString()
+  // @IsString()
+  @IsOptional()
   picture: string;
 }

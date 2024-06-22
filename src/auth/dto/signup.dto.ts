@@ -24,6 +24,7 @@ export class signUpDto {
   address: string;
 
   @IsString()
+  @IsOptional()
   picture: string;
 
   @IsEmail()

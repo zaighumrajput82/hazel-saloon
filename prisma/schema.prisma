@@ -15,11 +15,11 @@ datasource db {
 
 // Admin model
 model Admin {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
   password String
   name     String
-  picture  String
+  picture  String?
   shops    Shop[] // Define the relation but don't use @relation here
 }
 
