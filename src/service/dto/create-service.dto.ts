@@ -30,4 +30,8 @@ export class CreateServiceDto {
   @IsNotEmpty()
   @IsInt()
   shopId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  categoryId: number;
 }

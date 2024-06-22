@@ -5,6 +5,10 @@ export class UpdateServiceDto {
   @IsNumber()
   shopId: number;
 
+  @IsNumber()
+  @IsNotEmpty()
+  categoryId: number;
+
   @IsNotEmpty()
   @IsNumber()
   id: number; //Service Id

@@ -17,6 +17,15 @@ export class ServiceService {
       const existingShop = await this.prisma.shop.findUnique({
         where: { id: dto.shopId },
       });
+
+      const serviceCategory = await this.prisma.serviceCategory.findUnique({
+        where: { id: dto.categoryId },
+      });
+
+      if (!serviceCategory) {
+        throw new NotFoundException('Service Category not found');
+      }
+
       if (!existingShop) {
         throw new NotFoundException('Shop not found');
       }
@@ -40,6 +49,7 @@ export class ServiceService {
           maxService: dto.maxService,
           picture: dto.picture,
           shopId: dto.shopId,
+          categoryId: dto.categoryId,
         },
       });
 
@@ -89,6 +99,14 @@ export class ServiceService {
         delete dto.shopId, dto.id;
         if (existingServiceName) {
           return dto.name + ' Already exists';
+        }
+
+        const servicCategory = await this.prisma.serviceCategory.findUnique({
+          where: { id: dto.categoryId },
+        });
+
+        if (!servicCategory) {
+          return 'Category Does Not Exists';
         }
 
         const updatedService = await this.prisma.service.update({

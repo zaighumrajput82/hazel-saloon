@@ -45,19 +45,19 @@ model Shop {
 
 // Service model
 model Service {
-  id              Int             @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   name            String
   price           Float
   duration        Int
   maxService      Int
   picture         String
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   shopId          Int
   categoryId      Int
   // reservationId Int?
-  serviceCategory serviceCategory @relation(fields: [categoryId], references: [id])
-  shop            Shop            @relation(fields: [shopId], references: [id])
+  serviceCategory serviceCategory? @relation(fields: [categoryId], references: [id])
+  shop            Shop             @relation(fields: [shopId], references: [id])
   reservations    Reservation[] //? @relation(fields: [reservationId], references: [id])
 }
 
