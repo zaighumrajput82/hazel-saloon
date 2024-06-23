@@ -22,6 +22,9 @@ export class CreateReservationDto {
   @IsInt()
   shopId: number;
 
+  @IsOptional()
+  totalBill;
+
   @IsNotEmpty()
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED';
 

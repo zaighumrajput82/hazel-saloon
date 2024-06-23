@@ -22,6 +22,7 @@ export class ReservationService {
 
     try {
       // Check for each service ID if the maxService limit is exceeded
+      let totalBill = 0;
       for (const serviceId of serviceIds) {
         const service = await this.prisma.service.findUnique({
           where: { id: serviceId },
@@ -46,12 +47,15 @@ export class ReservationService {
             `Maximum number of reservations reached for service ID ${serviceId} at the requested time`,
           );
         }
+        totalBill += service.price;
       }
 
+      const reservationDetail = { ...reservationData, totalBill };
       // Create the reservation if the maxService limit is not exceeded
       const reservation = await this.prisma.reservation.create({
         data: {
-          ...reservationData,
+          ...reservationDetail,
+
           service: {
             connect: serviceIds.map((id) => ({ id })) || [],
           },
@@ -95,7 +99,7 @@ export class ReservationService {
       }
 
       const { serviceIds, slotTime, date, ...restData } = updateReservationDto;
-
+      let totalBill = 0;
       // Check for each service ID if the maxService limit is exceeded
       for (const serviceId of serviceIds) {
         const service = await this.prisma.service.findUnique({
@@ -122,13 +126,15 @@ export class ReservationService {
             `Maximum number of reservations reached for service ID ${serviceId} at the requested time`,
           );
         }
+        totalBill += service.price;
       }
 
+      const reservationData = { ...restData, totalBill };
       // Update reservation data
       const updatedReservation = await this.prisma.reservation.update({
         where: { id },
         data: {
-          ...restData,
+          ...reservationData,
           slotTime,
           date,
           service: {

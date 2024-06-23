@@ -8,6 +8,7 @@ import { ReservationModule } from './reservation/reservation.module';
 import { CustomerModule } from './customer/customer.module';
 import { OtpModule } from './otp/otp.module';
 import { ConfigModule } from '@nestjs/config';
+import { ReservationStatusService } from './reservation/ReservationStatus.service';
 
 @Module({
   imports: [
@@ -21,5 +22,6 @@ import { ConfigModule } from '@nestjs/config';
     CustomerModule,
     OtpModule,
   ],
+  providers: [ReservationStatusService],
 })
 export class AppModule {}
