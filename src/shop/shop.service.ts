@@ -229,6 +229,7 @@ export class ShopService {
       const shop = await this.prisma.shop.findUnique({
         where: { id: id },
       });
+
       if (!shop) {
         throw new NotFoundException('Shop not found');
       }
@@ -237,7 +238,6 @@ export class ShopService {
         shop.openingTime,
         shop.closingTime,
       );
-
       const openDaysWithSlots = this.getScheduleForMonth(
         shop.openingTime,
         shop.closingTime,
@@ -267,7 +267,7 @@ export class ShopService {
       };
     } catch (error) {
       console.error('Error getting open days:', error);
-      throw new Error('Could not get open days');
+      throw new InternalServerErrorException('Could not get open days');
     }
   }
 
@@ -276,16 +276,10 @@ export class ShopService {
     const maxService = service.maxService;
 
     openDaysWithSlots.forEach((day) => {
-      // Skip processing for Sunday
-      if (day.day === 'Sunday') {
-        return;
-      }
-
       day.slots = day.slots.map((slot) => {
         const [slotStartTime, slotEndTime] = slot.split(' - ');
         const startTime = dayjs(day.date + ' ' + slotStartTime);
 
-        // Count the number of bookings for this slot
         const numBookings = reservations.reduce((count, reservation) => {
           if (reservation.date === day.date && reservation.slotTime === slot) {
             return count + 1;
@@ -300,7 +294,6 @@ export class ShopService {
             reservation.date + ' ' + reservationEndTime,
           );
 
-          // Check if the reservation overlaps with the current slot
           if (
             (reservationStart.isBefore(startTime) &&
               reservationEnd.isAfter(startTime)) ||
@@ -315,14 +308,11 @@ export class ShopService {
           return count;
         }, 0);
 
-        // Check if the number of bookings exceeds maxService
         if (numBookings >= maxService) {
-          // Mark the slot as unavailable
           return `${slotStartTime} - ${slotEndTime} (Booked)`;
         }
 
-        // Return the slot as available
-        return `${slotStartTime} - ${slotEndTime} (Available)`;
+        return `${slotStartTime} - ${slotEndTime}`;
       });
     });
   }
@@ -335,17 +325,19 @@ export class ShopService {
     let currentDate = today;
 
     while (currentDate.isBefore(endDate)) {
-      const slots = this.generateSlotsForDay(
-        openingTime,
-        closingTime,
-        currentDate,
-      );
-      schedule.push({
-        day: currentDate.format('dddd'),
-        date: currentDate.format('YYYY-MM-DD'),
-        month: currentDate.format('MMMM'),
-        slots,
-      });
+      if (currentDate.format('dddd') !== 'Sunday') {
+        const slots = this.generateSlotsForDay(
+          openingTime,
+          closingTime,
+          currentDate,
+        );
+        schedule.push({
+          day: currentDate.format('dddd'),
+          date: currentDate.format('YYYY-MM-DD'),
+          month: currentDate.format('MMMM'),
+          slots,
+        });
+      }
 
       currentDate = currentDate.add(1, 'day');
     }
@@ -382,12 +374,13 @@ export class ShopService {
       slots.push(
         slotStart.format('HH:mm') +
           ' - ' +
-          slotStart.add(30, 'minute').format('HH:mm'),
+          slotStart.add(15, 'minute').format('HH:mm'),
       );
-      slotStart = slotStart.add(30, 'minute');
+      slotStart = slotStart.add(15, 'minute');
     }
 
     return slots;
   }
+
   //#endregion  Monthly Open Days With Dates Calculation
 }
