@@ -280,6 +280,7 @@ export class ShopService {
         const [slotStartTime, slotEndTime] = slot.split(' - ');
         const startTime = dayjs(day.date + ' ' + slotStartTime);
 
+        // Count the number of bookings for this slot
         const numBookings = reservations.reduce((count, reservation) => {
           if (reservation.date === day.date && reservation.slotTime === slot) {
             return count + 1;
@@ -294,6 +295,7 @@ export class ShopService {
             reservation.date + ' ' + reservationEndTime,
           );
 
+          // Check if the reservation overlaps with the current slot
           if (
             (reservationStart.isBefore(startTime) &&
               reservationEnd.isAfter(startTime)) ||
@@ -308,6 +310,7 @@ export class ShopService {
           return count;
         }, 0);
 
+        // Determine the tag for the slot
         if (numBookings >= maxService) {
           return `${slotStartTime} - ${slotEndTime} (Booked)`;
         }
