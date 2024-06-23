@@ -8,6 +8,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { CancelReservationDto } from './dto/CancelReservationDto.dto';
+import { send } from 'node:process';
+import { sendEmail } from 'src/utils/otp.util';
 
 @Injectable()
 export class ReservationService {
@@ -55,6 +57,18 @@ export class ReservationService {
           },
         },
       });
+
+      const customer = await this.prisma.customer.findUnique({
+        where: {
+          id: createReservationDto.customerId,
+        },
+      });
+
+      await sendEmail(
+        customer.email,
+        'HAZEL EYE SALOON',
+        'Your Reservation Has Been Confirmed',
+      );
 
       return reservation;
     } catch (error) {

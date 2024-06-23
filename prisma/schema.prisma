@@ -78,6 +78,7 @@ model Reservation {
   customerId Int
   shopId     Int
   status     status
+  totalBill  Float?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   customer   Customer  @relation(fields: [customerId], references: [id])

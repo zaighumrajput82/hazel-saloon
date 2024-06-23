@@ -1,4 +1,8 @@
 import * as nodemailer from 'nodemailer';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
 export function generateOTP(length: number): string {
   const characters = '0123456789';
   let otp = '';
@@ -11,18 +15,18 @@ export function generateOTP(length: number): string {
 export async function sendEmail(to: string, subject: string, text: string) {
   try {
     const transporter = nodemailer.createTransport({
-      host: 'mail.mozesto.com',
+      host: 'mail.zmetrolimo.com',
       port: 465,
       secure: true, // true for 465, false for other ports
       auth: {
-        user: 'info@mozesto.com',
-        pass: 'mozesto12345@',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
 
     // Email content
     const mailOptions = {
-      from: 'info@mozesto.com', // Sender address
+      from: 'info@zmetrolimo.com', // Sender address
       to, // Receiver address
       subject, // Subject line
       text, // Plain text body
