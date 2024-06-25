@@ -25,7 +25,7 @@ export class CreateServiceDto {
 
   @IsOptional()
   @IsString()
-  picture?: string;
+  picture?: string[];
 
   @IsNotEmpty()
   @IsInt()
