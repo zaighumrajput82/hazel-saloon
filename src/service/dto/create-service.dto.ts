@@ -12,26 +12,26 @@ export class CreateServiceDto {
   name: string;
 
   @IsNotEmpty()
-  @IsNumber()
+  //@IsNumber()
   price: number;
 
   @IsOptional()
-  @IsInt()
+  //@IsInt()
   duration?: number;
 
   @IsOptional()
-  @IsInt()
+  //@IsInt()
   maxService?: number;
 
   @IsOptional()
-  @IsString()
+  @IsString({ each: true })
   picture?: string[];
 
   @IsNotEmpty()
-  @IsInt()
+  //@IsNumber()
   shopId: number;
 
-  @IsNumber()
   @IsNotEmpty()
+  //@IsInt()
   categoryId: number;
 }
