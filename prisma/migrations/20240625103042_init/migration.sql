@@ -38,7 +38,7 @@ CREATE TABLE "Service" (
     "price" DOUBLE PRECISION NOT NULL,
     "duration" INTEGER NOT NULL,
     "maxService" INTEGER NOT NULL,
-    "picture" TEXT NOT NULL,
+    "picture" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "shopId" INTEGER NOT NULL,
@@ -65,6 +65,7 @@ CREATE TABLE "Reservation" (
     "customerId" INTEGER NOT NULL,
     "shopId" INTEGER NOT NULL,
     "status" "status" NOT NULL,
+    "totalBill" DOUBLE PRECISION,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

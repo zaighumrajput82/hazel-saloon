@@ -30,5 +30,5 @@ export class UpdateServiceDto {
 
   @IsString()
   @IsOptional()
-  picture?: string;
+  picture?: string[];
 }
