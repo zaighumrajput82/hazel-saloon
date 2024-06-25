@@ -1,12 +1,15 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import * as fs from 'fs';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { dot } from 'node:test/reporters';
+import path from 'path';
 
 @Injectable()
 export class ServiceService {
@@ -14,20 +17,21 @@ export class ServiceService {
   async create(dto: CreateServiceDto) {
     try {
       // Check if the associated shop exists
+
       const existingShop = await this.prisma.shop.findUnique({
-        where: { id: dto.shopId },
+        where: { id: Number(dto.shopId) },
       });
 
+      if (!existingShop) {
+        return 'Shop not found';
+      }
+
       const serviceCategory = await this.prisma.serviceCategory.findUnique({
-        where: { id: dto.categoryId },
+        where: { id: Number(dto.categoryId) },
       });
 
       if (!serviceCategory) {
         throw new NotFoundException('Service Category not found');
-      }
-
-      if (!existingShop) {
-        throw new NotFoundException('Shop not found');
       }
 
       dto.name = dto.name.toUpperCase();
@@ -44,12 +48,12 @@ export class ServiceService {
       const createdService = await this.prisma.service.create({
         data: {
           name: dto.name,
-          price: dto.price,
-          duration: dto.duration,
-          maxService: dto.maxService,
+          price: Number(dto.price),
+          duration: Number(dto.duration),
+          maxService: Number(dto.maxService),
           picture: dto.picture,
-          shopId: dto.shopId,
-          categoryId: dto.categoryId,
+          shopId: Number(dto.shopId),
+          categoryId: Number(dto.categoryId),
         },
       });
 
@@ -142,6 +146,38 @@ export class ServiceService {
     } catch (error) {
       console.error('Error deleting service:', error);
       throw new Error('Failed to delete service');
+    }
+  }
+
+  async createService(
+    createServiceDto: CreateServiceDto,
+    file: Express.Multer.File,
+  ) {
+    try {
+      // Save file to the uploads directory
+      const filePath = path.join('uploads', file.filename);
+
+      // Move file to public directory
+      const publicDir = path.join(__dirname, '../../public', filePath);
+      fs.renameSync(file.path, publicDir);
+
+      // Create service with file path
+      const service = await this.prisma.service.create({
+        data: {
+          name: createServiceDto.name,
+          price: createServiceDto.price,
+          duration: createServiceDto.duration,
+          maxService: createServiceDto.maxService,
+          picture: [filePath], // Assuming picture is an array of strings as per your model
+          shopId: createServiceDto.shopId,
+          categoryId: createServiceDto.categoryId,
+        },
+      });
+
+      return service;
+    } catch (error) {
+      console.error('Error creating service:', error);
+      throw new InternalServerErrorException('Failed to create service');
     }
   }
 }
