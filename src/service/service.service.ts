@@ -19,45 +19,45 @@ export class ServiceService {
       // Check if the associated shop exists
 
       const existingShop = await this.prisma.shop.findUnique({
-        where: { id: dto.shopId },
+        where: { id: Number(dto.shopId) },
       });
 
-      // if (!existingShop) {
-      //   return 'Shop not found';
-      // }
+      if (!existingShop) {
+        return 'Shop not found';
+      }
 
-      // const serviceCategory = await this.prisma.serviceCategory.findUnique({
-      //   where: { id: Number(dto.categoryId) },
-      // });
+      const serviceCategory = await this.prisma.serviceCategory.findUnique({
+        where: { id: Number(dto.categoryId) },
+      });
 
-      // if (!serviceCategory) {
-      //   throw new NotFoundException('Service Category not found');
-      // }
+      if (!serviceCategory) {
+        throw new NotFoundException('Service Category not found');
+      }
 
-      // dto.name = dto.name.toUpperCase();
+      dto.name = dto.name.toUpperCase();
 
-      // const existingService = await this.prisma.service.findFirst({
-      //   where: { name: dto.name },
-      // });
+      const existingService = await this.prisma.service.findFirst({
+        where: { name: dto.name },
+      });
 
-      // if (existingService) {
-      //   return dto.name + ' Service Already Exists';
-      // }
+      if (existingService) {
+        return dto.name + ' Service Already Exists';
+      }
 
       // Create the service
-      // const createdService = await this.prisma.service.create({
-      //   data: {
-      //     name: dto.name,
-      //     price: Number(dto.price),
-      //     duration: Number(dto.duration),
-      //     maxService: Number(dto.maxService),
-      //     picture: dto.picture,
-      //     shopId: Number(dto.shopId),
-      //     categoryId: Number(dto.categoryId),
-      //   },
-      // });
-      return 'ok';
-      // return createdService;
+      const createdService = await this.prisma.service.create({
+        data: {
+          name: dto.name,
+          price: Number(dto.price),
+          duration: Number(dto.duration),
+          maxService: Number(dto.maxService),
+          picture: dto.picture,
+          shopId: Number(dto.shopId),
+          categoryId: Number(dto.categoryId),
+        },
+      });
+
+      return createdService;
     } catch (error) {
       // Handle errors appropriately
       throw error;
