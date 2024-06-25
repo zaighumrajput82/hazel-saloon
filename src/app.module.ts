@@ -10,6 +10,8 @@ import { OtpModule } from './otp/otp.module';
 import { ConfigModule } from '@nestjs/config';
 import { ReservationStatusService } from './reservation/ReservationStatus.service';
 import { ServiceCategoryModule } from './service-category/service-category.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -23,6 +25,10 @@ import { ServiceCategoryModule } from './service-category/service-category.modul
     CustomerModule,
     OtpModule,
     ServiceCategoryModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'), // path to the public folder
+      serveRoot: '/public/', // route to serve static files
+    }),
   ],
   providers: [ReservationStatusService],
 })
