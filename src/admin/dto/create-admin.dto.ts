@@ -1,27 +1,25 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUrl,
-  ArrayNotEmpty,
-  ArrayMinSize,
-  IsOptional,
 } from 'class-validator';
 
 export class CreateAdminDto {
   @IsNotEmpty()
   @IsString()
+  name: string;
+
+  @IsNotEmpty()
+  @IsEmail()
   email: string;
 
   @IsNotEmpty()
   @IsString()
   password: string;
 
-  @IsNotEmpty()
-  @IsString()
-  name: string;
-
-  // @IsString()
   @IsOptional()
-  picture: string;
+  @IsString()
+  picture?: string;
 }

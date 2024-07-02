@@ -12,6 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { LoginShopDto } from 'src/shop/dto/login-shop.dto';
 import { SignInCustomerDto } from 'src/customer/dto/signIn-customer.dto';
+import { CreateAdminDto } from 'src/admin/dto/create-admin.dto';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,40 @@ export class AuthService {
   ) {}
 
   async signUp(dto: signUpDto) {
+    try {
+      const existingUser = await this.prisma.admin.findFirst({
+        where: {
+          email: dto.email,
+        },
+      });
+
+      if (!existingUser) {
+        const hash = await argon2.hash(dto.password);
+        const owner = await this.prisma.admin.create({
+          data: {
+            name: dto.name,
+            password: hash,
+            email: dto.email,
+            picture: dto.picture,
+          },
+        });
+        return this.signToken(dto.email, dto.password);
+      } else {
+        return 'User with these credentials already exists';
+      }
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code == 'P2002') {
+          throw new ForbiddenException(
+            'Some Error Occured Please Try Again Later!',
+          );
+        }
+      }
+      throw error;
+    }
+  }
+
+  async createAdmin(dto: CreateAdminDto) {
     try {
       const existingUser = await this.prisma.admin.findFirst({
         where: {
