@@ -18,7 +18,7 @@ export class ShopService {
 
   //#region  Create Shop
 
-  async create(createShopDto: CreateShopDto) {
+  async create(createShopDto: CreateShopDto, pictureUrl: string) {
     try {
       // Hash the password before saving to the database
       const hashedPassword = await argon2.hash(createShopDto.password);
@@ -29,7 +29,7 @@ export class ShopService {
           location: createShopDto.location,
           name: createShopDto.name,
           phone: createShopDto.phone,
-          picture: createShopDto.picture,
+          picture: pictureUrl,
           email: createShopDto.email,
           password: hashedPassword,
           openingTime: createShopDto.openingTime,

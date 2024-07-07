@@ -44,7 +44,7 @@ export class CreateShopDto {
   @IsNotEmpty()
   openingDays: string;
 
-  @IsInt()
+  @IsNotEmpty()
   @IsOptional()
   adminId?: number;
 }
