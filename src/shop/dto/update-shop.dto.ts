@@ -21,7 +21,7 @@ export class UpdateShopDto {
   phone: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   picture: string;
 
   @IsString()
@@ -45,7 +45,8 @@ export class UpdateShopDto {
   @IsNotEmpty()
   openingDays: string;
 
-  @IsInt()
   @IsNotEmpty()
   adminId: number;
+  @IsNotEmpty()
+  shopId: number;
 }

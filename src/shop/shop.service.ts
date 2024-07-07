@@ -99,18 +99,24 @@ export class ShopService {
 
   //#region  Update Shop
 
-  async updateShop(dto: UpdateShopDto) {
+  async updateShop(dto: UpdateShopDto, pictureUrl: string) {
     try {
       // Find the shop by email
-      const existingShop = await this.prisma.shop.findFirst({
-        where: { email: dto.email },
+      const existingShop = await this.prisma.shop.findUnique({
+        where: { id: dto.shopId },
       });
-
       if (!existingShop) {
         throw new NotFoundException('Shop not found');
       }
 
-      // Verify the password
+      const admin = await this.prisma.admin.findUnique({
+        where: { id: Number(dto.adminId) },
+      });
+      if (!admin) {
+        return 'some error occured please login and try again';
+      }
+
+      // // Verify the password
       const passwordValid = await argon2.verify(
         existingShop.password,
         dto.password,
@@ -119,20 +125,29 @@ export class ShopService {
         throw new UnauthorizedException('Invalid password');
       }
 
-      // Hash the new password if it's being updated
+      // // Hash the new password if it's being updated
       if (dto.password) {
         dto.password = await argon2.hash(dto.password);
       }
 
-      // Update the shop details
+      // // Update the shop details
       const updatedShop = await this.prisma.shop.update({
         where: { id: existingShop.id },
-        data: { ...dto },
+        data: {
+          location: dto.location,
+          name: dto.name,
+          phone: dto.phone,
+          picture: pictureUrl,
+          email: dto.email,
+          password: existingShop.password,
+          closingTime: dto.closingTime,
+          openingTime: dto.openingTime,
+          openingDays: dto.openingDays,
+        },
       });
 
       return updatedShop;
     } catch (error) {
-      console.error('Error updating shop:', error);
       throw new BadRequestException('Error updating shop');
     }
   }
