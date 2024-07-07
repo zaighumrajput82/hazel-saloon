@@ -23,6 +23,13 @@ export class ShopService {
       // Hash the password before saving to the database
       const hashedPassword = await argon2.hash(createShopDto.password);
 
+      const admin = await this.prisma.admin.findUnique({
+        where: { id: createShopDto.adminId },
+      });
+      if (!admin) {
+        return 'Some error occured please try again';
+      }
+
       // Create the shop using the Prisma client
       const shop = await this.prisma.shop.create({
         data: {
