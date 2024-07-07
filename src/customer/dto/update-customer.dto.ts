@@ -28,8 +28,4 @@ export class UpdateCustomerDto {
   @IsString()
   @IsOptional()
   password?: string;
-
-  @IsBoolean()
-  @IsOptional()
-  isVerified?: boolean;
 }

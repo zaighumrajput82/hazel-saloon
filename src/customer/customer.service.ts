@@ -36,8 +36,6 @@ export class CustomerService {
           throw new BadRequestException(
             'Email is already registered and verified',
           );
-        } else {
-          return 'Email is already registered but not verified';
         }
       }
 
@@ -60,6 +58,27 @@ export class CustomerService {
             isUsed: false,
           },
         });
+        const hashedPassword = await argon2.hash(dto.password);
+
+        // Create new customer
+        const newCustomer = await this.prisma.customer.create({
+          data: {
+            name: dto.name,
+            phone: dto.phone,
+            gender: dto.gender,
+            address: dto.address,
+            picture: dto.picture,
+            email: dto.email,
+            password: hashedPassword,
+            isVerified: false,
+          },
+        });
+        await sendEmail(
+          dto.email,
+          'OTP for Verification',
+          `Your OTP for verification is: ${otp}`,
+        );
+        return 'Otp sent to your email';
       } else {
         // Create new OTP record
         await this.prisma.otp.create({
@@ -96,7 +115,7 @@ export class CustomerService {
         },
       });
 
-      return newCustomer;
+      return 'Otp sent to your email';
     } catch (error) {
       console.error('Error signing up customer:', error);
       throw new BadRequestException('Error signing up customer');
@@ -141,11 +160,11 @@ export class CustomerService {
       });
 
       if (!existingCustomer) {
-        throw new NotFoundException('Customer not found');
+        return 'Customer not found';
       }
 
       dto.email = existingCustomer.email;
-      dto.isVerified = true;
+
       dto.password = await argon2.hash(dto.password);
       // Perform the update operation
       const updatedCustomer = await this.prisma.customer.update({
@@ -153,7 +172,7 @@ export class CustomerService {
         data: { ...dto },
       });
 
-      return updatedCustomer;
+      return 'Updated Successfully';
     } catch (error) {
       // Handle errors
       console.error('Error updating customer:', error);
