@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Put,
   Delete,
+  Get,
 } from '@nestjs/common';
 import { ReservationService } from './reservation.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -29,5 +30,15 @@ export class ReservationsController {
   @Delete('cancel')
   cancelReservation(@Body() dto: CancelReservationDto) {
     return this.reservationService.cancelReservation(dto);
+  }
+
+  @Get('get-today-reservations')
+  getTodayReservation(@Body() body: { id: number }) {
+    return this.reservationService.getTodayReservation(body.id);
+  }
+
+  @Get('get-today-all')
+  getAllReservations(@Body() body: { id: number }) {
+    return this.reservationService.getAllReservation(body.id);
   }
 }

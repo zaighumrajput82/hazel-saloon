@@ -181,4 +181,61 @@ export class ReservationService {
       throw new InternalServerErrorException('Failed to cancel reservation');
     }
   }
+
+  async getTodayReservation(id: number) {
+    try {
+      // Helper function to format date to YYYY-MM-DD
+      const formatDate = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const today = new Date();
+      const formattedToday = formatDate(today);
+      // console.log(formattedToday);
+      const reservations = await this.prisma.reservation.findMany({
+        where: {
+          shopId: id,
+          date: formattedToday.toString(),
+        },
+      });
+
+      if (!reservations) {
+        throw new NotFoundException('No Reservation Found');
+      }
+      if (reservations.length < 1) {
+        return 'No Reservation Found';
+      }
+      return reservations;
+    } catch (error) {
+      throw new NotFoundException(
+        'An error occurred while retrieving reservations',
+      );
+    }
+  }
+
+  async getAllReservation(id: number) {
+    try {
+      // console.log(formattedToday);
+      const reservations = await this.prisma.reservation.findMany({
+        where: {
+          shopId: id,
+        },
+      });
+
+      if (!reservations) {
+        throw new NotFoundException('No Reservation Found');
+      }
+      if (reservations.length < 1) {
+        return 'No Reservation Found';
+      }
+      return reservations;
+    } catch (error) {
+      throw new NotFoundException(
+        'An error occurred while retrieving reservations',
+      );
+    }
+  }
 }
