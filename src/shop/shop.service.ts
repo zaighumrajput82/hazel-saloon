@@ -163,7 +163,12 @@ export class ShopService {
       });
 
       if (shop) {
-        // Delete related records in the Service table first
+        // Delete related records in the Reservation,Service table first
+        await this.prisma.reservation.deleteMany({
+          where: {
+            shopId: id,
+          },
+        });
         await this.prisma.service.deleteMany({
           where: {
             shopId: id,
