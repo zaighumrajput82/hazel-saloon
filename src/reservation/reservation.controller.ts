@@ -19,6 +19,7 @@ export class ReservationsController {
 
   @Post('create')
   create(@Body() dto: CreateReservationDto) {
+    console.log('okoko');
     return this.reservationService.createReservation(dto);
   }
 
@@ -32,12 +33,7 @@ export class ReservationsController {
     return this.reservationService.cancelReservation(dto);
   }
 
-  @Get('get-today-reservations')
-  getTodayReservation(@Body() body: { id: number }) {
-    return this.reservationService.getTodayReservation(body.id);
-  }
-
-  @Get('get-today-all')
+  @Get('get-all-reservations')
   getAllReservations(@Body() body: { id: number }) {
     return this.reservationService.getAllReservation(body.id);
   }
